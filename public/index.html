@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Blog</title>
+  <meta charset='utf-8'>
+  <style>
+    #ta {
+      margin: 20px;
+    }
+    .div {
+      border: 1px solid black;
+      border-radius: 3px;
+      margin: 20px;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <textarea id='ta'>
+
+  </textarea>
+  <button id='submit'>
+    Submit
+  </button>
+</body>
+<script>
+  'use strict'
+
+  const parseResponse = res => {
+    return res.json()
+  }
+
+  const api = {
+    getArticle: id => fetch(`http://localhost:8080/article/${id}`, {mode: 'cors'}).then(parseResponse),
+    setArticle: (id, content) => fetch(`http://localhost:8080/article/${id}`, {
+      method: 'post',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    }).then(parseResponse),
+  }
+
+  api.getArticle('')
+    .then(arr => Promise.all(arr.map(api.getArticle)))
+    .then(arr => arr.map(content => {
+      const div = document.createElement('div')
+      document.body.appendChild(div)
+      div.textContent = content
+      div.className = 'div'
+    }))
+
+  const submit = document.getElementById('submit')
+
+  submit.onclick = () => {
+    api.setArticle('', submit.value)
+  }
+
+</script>
+</html>
