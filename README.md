@@ -9,5 +9,5 @@ $ yarn # ou npm install
 $ node app.js
 ```
 
-Ouvrir un navigateur à l'adresse [localhost](http://localhost)
+Ouvrir un navigateur à l'adresse [localhost](http://localhost)  
 Contempler.
