@@ -32,26 +32,32 @@
 
   const api = {
     getArticle: id => fetch(`http://localhost:8080/article/${id}`, {mode: 'cors'}).then(parseResponse),
-    setArticle: (id, content) => fetch(`http://localhost:8080/article/${id}`, {
+    setArticle: (id, content) => fetch(`http://localhost:8080/article/`, {
       method: 'post',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ id, content }),
     }).then(parseResponse),
+  }
+
+  const addArticle = content => {
+    const div = document.createElement('div')
+    document.body.appendChild(div)
+    div.className = 'div'
+    div.textContent = content
   }
 
   api.getArticle('')
     .then(arr => Promise.all(arr.map(api.getArticle)))
-    .then(arr => arr.map(content => {
-      const div = document.createElement('div')
-      document.body.appendChild(div)
-      div.textContent = content
-      div.className = 'div'
-    }))
+    .then(arr => arr.map(addArticle))
 
   const submit = document.getElementById('submit')
 
-  submit.onclick = () => {
-    api.setArticle('', submit.value)
+  submit.onclick = async () => {
+    const ta = document.getElementById('ta')
+    if (!ta.value.trim()) return
+    await api.setArticle('', ta.value)
+    addArticle(ta.value)
+    ta.value = ''
   }
 
 </script>

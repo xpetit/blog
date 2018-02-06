@@ -7,6 +7,7 @@ const writeFile = promisify(fs.writeFile)
 const readdir = promisify(fs.readdir)
 const frontend = restify.createServer()
 const backend = restify.createServer()
+const corsMiddleware = require('restify-cors-middleware')
 
 frontend.get('/\/.*/', restify.plugins.serveStatic({
     directory: __dirname + "/public/",
@@ -14,15 +15,22 @@ frontend.get('/\/.*/', restify.plugins.serveStatic({
    })
 )
 
+const cors = corsMiddleware({
+  preflightMaxAge: 5,
+  origins: ['*']
+})
+
+backend.pre(cors.preflight);
+backend.use(cors.actual);
 backend.use(restify.plugins.bodyParser())
 
-backend.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*")
-    res.header("Access-Control-Allow-Headers", "X-Requested-With,content-type")
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE')
-    res.header('Access-Control-Allow-Credentials', true)
-    next()
-  })
+// backend.use((req, res, next) => {
+//     res.header("Access-Control-Allow-Origin", "*")
+//     res.header("Access-Control-Allow-Headers", "X-Requested-With,content-type")
+//     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE')
+//     res.header('Access-Control-Allow-Credentials', true)
+//     next()
+//   })
 
 const rootDir = process.env.ROOT_DIR || `${__dirname}/articles`
 
@@ -48,9 +56,9 @@ const respond = (req, res, next) => {
 }
 
 const getId = () => readdir(rootDir)
-  .then(idList => idList
-    .map(Number)
-    .sort((a, b) => b - a)[0] + 1)
+  .then(idList => idList.length
+    ? idList.map(Number).sort((a, b) => b - a)[0] + 1
+    : 1)
 
 backend.get('/article/', asyncWrapper(({ params }) =>
   readdir(rootDir)))
@@ -58,11 +66,10 @@ backend.get('/article/', asyncWrapper(({ params }) =>
 backend.get('/article/:id', asyncWrapper(({ params }) =>
   readFile(path.join(rootDir, params.id), 'utf8')))
 
-backend.post('/article/:id', asyncWrapper(({ params, body }) =>
-  writeFile(path.join(rootDir, params.id), body.content, 'utf8')))
-
-backend.post('/article/', asyncWrapper(async ({ body }) =>
-  writeFile(path.join(rootDir, await getId()), body.content, 'utf8')))
+backend.post('/article/', asyncWrapper(async ({ body }) => {
+  await writeFile(path.join(rootDir, body.id || String(await getId())), body.content, 'utf8')
+  return 'OK'
+}))
 
 backend.listen(8080, () => {
   console.log(`${backend.name} listening at ${backend.url}`)
