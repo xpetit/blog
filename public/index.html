@@ -1,64 +1,59 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Blog</title>
-  <meta charset='utf-8'>
-  <style>
-    #ta {
-      margin: 20px;
-    }
-    .div {
-      border: 1px solid black;
-      border-radius: 3px;
-      margin: 20px;
-      padding: 10px;
-    }
-  </style>
-</head>
-<body>
-  <textarea id='ta'>
+  <head>
+    <title>Blog</title>
+    <meta charset='utf-8'>
+    <style>
+      #ta {
+        margin: 20px;
+      }
+      .div {
+        border: 1px solid black;
+        border-radius: 3px;
+        margin: 20px;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id='ta'></textarea>
+    <button id='submit'>Submit</button>
+  </body>
+  <script>
+    'use strict'
 
-  </textarea>
-  <button id='submit'>
-    Submit
-  </button>
-</body>
-<script>
-  'use strict'
+    const parseResponse = res => res.json()
 
-  const parseResponse = res => {
-    return res.json()
-  }
+    const getArticle = id => fetch(`/article/${id}`).then(parseResponse)
 
-  const api = {
-    getArticle: id => fetch(`http://localhost:8080/article/${id}`, {mode: 'cors'}).then(parseResponse),
-    setArticle: (id, content) => fetch(`http://localhost:8080/article/`, {
+    const setArticle = content => fetch(`/article/`, {
       method: 'post',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, content }),
-    }).then(parseResponse),
-  }
+      body: JSON.stringify({ content }),
+    }).then(parseResponse)
 
-  const addArticle = content => {
-    const div = document.createElement('div')
-    document.body.appendChild(div)
-    div.className = 'div'
-    div.textContent = content
-  }
+    const addArticle = content => {
+      const div = document.createElement('div')
 
-  api.getArticle('')
-    .then(arr => Promise.all(arr.map(api.getArticle)))
-    .then(arr => arr.map(addArticle))
+      div.className = 'div'
+      div.textContent = content
+      document.body.appendChild(div)
+    }
 
-  const submit = document.getElementById('submit')
+    getArticle('')
+      .then(arr => Promise.all(arr.map(getArticle)))
+      .then(arr => arr.forEach(addArticle))
 
-  submit.onclick = async () => {
-    const ta = document.getElementById('ta')
-    if (!ta.value.trim()) return
-    await api.setArticle('', ta.value)
-    addArticle(ta.value)
-    ta.value = ''
-  }
+    const submitButton = document.getElementById('submit')
 
-</script>
+    submitButton.onclick = async () => {
+      const ta = document.getElementById('ta')
+
+      if (ta.value.trim()) {
+        await setArticle(ta.value)
+        addArticle(ta.value)
+      }
+      ta.value = ''
+    }
+  </script>
 </html>
